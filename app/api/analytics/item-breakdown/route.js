@@ -2,6 +2,7 @@ import { apiHandler } from '@/lib/apiHandler';
 import { ApiError } from '@/lib/errors';
 import { getUserFromRequest } from '@/lib/auth';
 import Purchase from '@/models/Purchase';
+import mongoose from 'mongoose';
 
 async function handler(request) {
   const userPayload = getUserFromRequest(request);
@@ -11,8 +12,9 @@ async function handler(request) {
   const limit = parseInt(searchParams.get('limit') || '10', 10);
   const projectId = searchParams.get('projectId');
 
-  const matchStage = { companyId: userPayload.companyId };
-  if (projectId) matchStage.projectId = projectId;
+  const companyId = new mongoose.Types.ObjectId(userPayload.companyId);
+  const matchStage = { companyId };
+  if (projectId) matchStage.projectId = new mongoose.Types.ObjectId(projectId);
 
   const breakdown = await Purchase.aggregate([
     { $match: matchStage },

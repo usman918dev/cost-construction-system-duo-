@@ -31,6 +31,7 @@ export default function LoginPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
+        credentials: 'include', // Important: Include cookies in request
       });
 
       const data = await res.json();
@@ -39,7 +40,8 @@ export default function LoginPage() {
         throw new Error(data.error?.message || 'Login failed');
       }
 
-      router.push('/');
+      // Force page reload to ensure middleware picks up the new cookie
+      window.location.href = '/';
     } catch (err) {
       setError(err.message);
     } finally {

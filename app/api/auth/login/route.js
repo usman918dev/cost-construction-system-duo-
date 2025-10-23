@@ -20,10 +20,15 @@ async function handler(request) {
     throw new ApiError('Invalid email or password', 401);
   }
 
+  // Ensure companyId is a string
+  const companyIdString = typeof user.companyId === 'string' 
+    ? user.companyId 
+    : user.companyId.toString();
+
   const token = signJwt({
     sub: user._id.toString(),
     role: user.role,
-    companyId: user.companyId.toString(),
+    companyId: companyIdString,
   });
 
   const response = NextResponse.json({
@@ -34,12 +39,19 @@ async function handler(request) {
         name: user.name,
         email: user.email,
         role: user.role,
-        companyId: user.companyId,
+        companyId: companyIdString,
       },
     },
   });
 
-  response.headers.set('Set-Cookie', setAuthCookie(token));
+  // Set cookie using Next.js cookies API
+  response.cookies.set('auth_token', token, {
+    httpOnly: true,
+    secure: false, // false for localhost
+    sameSite: 'lax', // Changed to lax for better compatibility with redirects
+    maxAge: 60 * 60 * 24 * 7, // 7 days
+    path: '/',
+  });
 
   return response;
 }

@@ -9,18 +9,9 @@ export default function Navbar() {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    // MOCK USER FOR TESTING - No API call needed
-    setUser({
-      name: 'Test User',
-      role: 'admin',
-    });
-
-    /* ORIGINAL CODE - COMMENTED FOR TESTING
     fetchUser();
-    */
   }, []);
 
-  /* ORIGINAL fetchUser - Keep for later
   const fetchUser = async () => {
     try {
       const res = await fetch('/api/auth/me');
@@ -32,18 +23,19 @@ export default function Navbar() {
       console.error('Failed to fetch user:', error);
     }
   };
-  */
 
-  /* ORIGINAL handleLogout - Keep for later
   const handleLogout = async () => {
     try {
-      await fetch('/api/auth/logout', { method: 'POST' });
-      router.push('/login');
+      await fetch('/api/auth/logout', { 
+        method: 'POST',
+        credentials: 'include' 
+      });
+      // Force reload to clear cookie and redirect
+      window.location.href = '/login';
     } catch (error) {
       console.error('Logout failed:', error);
     }
   };
-  */
 
   return (
     <header className="bg-white border-b border-gray-200 px-6 py-4">
@@ -56,10 +48,9 @@ export default function Navbar() {
                 <p className="font-medium text-gray-900">{user.name}</p>
                 <p className="text-gray-500 capitalize">{user.role}</p>
               </div>
-              {/* LOGOUT BUTTON DISABLED FOR TESTING */}
-              {/* <Button variant="outline" onClick={handleLogout}>
+              <Button variant="outline" onClick={handleLogout}>
                 Logout
-              </Button> */}
+              </Button>
             </>
           )}
         </div>

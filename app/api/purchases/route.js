@@ -4,6 +4,7 @@ import { ApiError } from '@/lib/errors';
 import { getUserFromRequest } from '@/lib/auth';
 import { canManager } from '@/lib/roles';
 import Purchase from '@/models/Purchase';
+import { checkProjectBudgetAlerts } from '@/lib/notificationService';
 
 async function getPurchases(request) {
   const userPayload = getUserFromRequest(request);
@@ -45,6 +46,11 @@ async function createPurchase(request) {
     createdBy: userPayload.sub,
     companyId: userPayload.companyId,
   });
+
+  // Check budget alerts after purchase
+  if (purchase.projectId) {
+    await checkProjectBudgetAlerts(purchase.projectId, userPayload.companyId);
+  }
 
   return { purchase };
 }

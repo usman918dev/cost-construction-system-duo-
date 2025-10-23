@@ -68,6 +68,7 @@ export default function SignupPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
+        credentials: 'include', // Important: Include cookies
       });
 
       const data = await res.json();
@@ -76,8 +77,8 @@ export default function SignupPage() {
         throw new Error(data.error?.message || 'Registration failed');
       }
 
-      // Redirect to login page after successful registration
-      router.push('/login?registered=true');
+      // Use window.location for proper redirect with cookie
+      window.location.href = '/login?registered=true';
     } catch (err) {
       setError(err.message);
     } finally {

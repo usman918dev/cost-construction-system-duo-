@@ -16,6 +16,23 @@ const phaseSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    status: {
+      type: String,
+      enum: ['Not Started', 'In Progress', 'Completed', 'On Hold'],
+      default: 'Not Started',
+    },
+    progressPercentage: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 100,
+    },
+    startDate: {
+      type: Date,
+    },
+    endDate: {
+      type: Date,
+    },
     companyId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Company',

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Navbar from '@/components/layout/Navbar';
 import Sidebar from '@/components/layout/Sidebar';
 import Card from '@/components/ui/Card';
@@ -9,11 +10,13 @@ import TopItemsBarChart from '@/components/charts/TopItemsBarChart';
 import VendorSpendPieChart from '@/components/charts/VendorSpendPieChart';
 
 export default function Dashboard() {
+  const router = useRouter();
   const [budgetData, setBudgetData] = useState([]);
   const [phaseData, setPhaseData] = useState([]);
   const [itemData, setItemData] = useState([]);
   const [vendorData, setVendorData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     fetchAnalytics();
@@ -21,19 +24,46 @@ export default function Dashboard() {
 
   const fetchAnalytics = async () => {
     try {
+      setError(null);
       const [budget, phase, items, vendors] = await Promise.all([
-        fetch('/api/analytics/budget-vs-actual').then((r) => r.json()),
-        fetch('/api/analytics/phase-summary').then((r) => r.json()),
-        fetch('/api/analytics/item-breakdown?limit=5').then((r) => r.json()),
-        fetch('/api/analytics/vendor-spend').then((r) => r.json()),
+        fetch('/api/analytics/budget-vs-actual', { credentials: 'include' }).then((r) => {
+          if (r.status === 401) {
+            throw new Error('Unauthorized');
+          }
+          return r.json();
+        }),
+        fetch('/api/analytics/phase-summary', { credentials: 'include' }).then((r) => {
+          if (r.status === 401) {
+            throw new Error('Unauthorized');
+          }
+          return r.json();
+        }),
+        fetch('/api/analytics/item-breakdown?limit=5', { credentials: 'include' }).then((r) => {
+          if (r.status === 401) {
+            throw new Error('Unauthorized');
+          }
+          return r.json();
+        }),
+        fetch('/api/analytics/vendor-spend', { credentials: 'include' }).then((r) => {
+          if (r.status === 401) {
+            throw new Error('Unauthorized');
+          }
+          return r.json();
+        }),
       ]);
 
-      if (budget.ok) setBudgetData(budget.data.budgetComparison);
-      if (phase.ok) setPhaseData(phase.data.summary);
-      if (items.ok) setItemData(items.data.breakdown);
-      if (vendors.ok) setVendorData(vendors.data.vendorSpend);
+      if (budget.ok) setBudgetData(budget.data?.budgetComparison || []);
+      if (phase.ok) setPhaseData(phase.data?.summary || []);
+      if (items.ok) setItemData(items.data?.breakdown || []);
+      if (vendors.ok) setVendorData(vendors.data?.vendorSpend || []);
     } catch (error) {
       console.error('Failed to fetch analytics:', error);
+      if (error.message === 'Unauthorized') {
+        // Redirect to login if unauthorized
+        router.push('/login');
+      } else {
+        setError('Failed to load dashboard data. Please try refreshing the page.');
+      }
     } finally {
       setLoading(false);
     }
@@ -46,6 +76,12 @@ export default function Dashboard() {
         <Navbar />
         <main className="flex-1 p-6">
           <h2 className="text-2xl font-bold mb-6">Dashboard</h2>
+
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+              {error}
+            </div>
+          )}
 
           {loading ? (
             <div className="text-center py-12">Loading...</div>

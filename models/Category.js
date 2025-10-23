@@ -16,6 +16,18 @@ const categorySchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    parentCategoryId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Category',
+      default: null,
+      index: true,
+    },
+    level: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 3, // Allow up to 3 levels of nesting
+    },
     companyId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Company',

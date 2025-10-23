@@ -1,53 +1,49 @@
 import { NextResponse } from 'next/server';
-import { parse } from 'cookie';
 import { verifyJwt } from './lib/auth';
 
-const publicPaths = ['/login', '/api/auth/login', '/api/auth/register'];
+const publicPaths = ['/login', '/signup', '/api/auth/login', '/api/auth/register'];
 const publicAssets = ['/_next', '/favicon.ico', '/public'];
 
 export function middleware(request) {
-  // AUTHENTICATION TEMPORARILY DISABLED FOR TESTING
-  // TODO: Re-enable authentication after testing UI and functionality
-  return NextResponse.next();
-
-  /* ORIGINAL AUTH CODE - COMMENTED OUT FOR TESTING
   const { pathname } = request.nextUrl;
+
+  // AUTHENTICATION DISABLED FOR 1 HOUR - Allow all routes
+  return NextResponse.next();
 
   // Allow public assets
   if (publicAssets.some((path) => pathname.startsWith(path))) {
     return NextResponse.next();
   }
 
-  // Allow public paths
+  // Check authentication first
+  const token = request.cookies.get('auth_token')?.value;
+  const payload = token ? verifyJwt(token) : null;
+
+  // If authenticated and trying to access login/signup, redirect to home
+  if (payload && (pathname === '/login' || pathname === '/signup')) {
+    return NextResponse.redirect(new URL('/', request.url));
+  }
+
+  // Allow public paths for non-authenticated users
   if (publicPaths.includes(pathname)) {
     return NextResponse.next();
   }
 
-  // Check authentication
-  const cookies = parse(request.headers.get('cookie') || '');
-  const token = cookies.auth_token;
-
+  // For protected routes, check authentication
   if (!token) {
     // Redirect to login if not authenticated
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  const payload = verifyJwt(token);
-
   if (!payload) {
-    // Invalid token, redirect to login
+    // Invalid token, clear it and redirect to login
     const response = NextResponse.redirect(new URL('/login', request.url));
-    response.headers.set('Set-Cookie', 'auth_token=; Path=/; Max-Age=0');
+    response.cookies.delete('auth_token');
     return response;
   }
 
-  // If authenticated and trying to access login, redirect to home
-  if (pathname === '/login') {
-    return NextResponse.redirect(new URL('/', request.url));
-  }
-
+  // Authenticated user accessing protected route
   return NextResponse.next();
-  */
 }
 
 export const config = {

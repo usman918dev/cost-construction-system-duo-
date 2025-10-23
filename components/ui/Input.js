@@ -11,6 +11,7 @@ export default function Input({ label, error, className, ...props }) {
       <input
         className={clsx(
           'px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent',
+          'bg-white text-gray-900 placeholder:text-gray-400',
           error && 'border-red-500',
           className
         )}
