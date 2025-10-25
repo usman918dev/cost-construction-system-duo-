@@ -27,6 +27,7 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
+      console.log('[CLIENT] Submitting login form');
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -34,22 +35,37 @@ export default function LoginPage() {
         credentials: 'include', // Important: Include cookies in request
       });
 
+      console.log('[CLIENT] Login response status:', res.status);
+      console.log('[CLIENT] Login response headers:', [...res.headers.entries()]);
+      
+      // Check specifically for Set-Cookie header
+      const setCookie = res.headers.get('set-cookie');
+      console.log('[CLIENT] Set-Cookie header:', setCookie);
+
       const data = await res.json();
+      console.log('[CLIENT] Login response data:', data);
 
       if (!res.ok) {
+        console.log('[CLIENT] Login failed:', data.error?.message);
         throw new Error(data.error?.message || 'Login failed');
       }
 
-      // Force page reload to ensure middleware picks up the new cookie
-      window.location.href = '/';
+      console.log('[CLIENT] Login successful, navigating to home');
+      
+      // Small delay to ensure cookie is processed by browser
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      console.log('[CLIENT] Performing hard navigation to /');
+      // Force full navigation so the browser applies the Set-Cookie header
+      // and server-side middleware sees the new cookie on the next request.
+      // window.location.href = '/';
     } catch (err) {
+      console.error('[CLIENT] Login error:', err);
       setError(err.message);
     } finally {
       setLoading(false);
     }
-  };
-
-  return (
+  };  return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="w-full max-w-md">
         <Card>
