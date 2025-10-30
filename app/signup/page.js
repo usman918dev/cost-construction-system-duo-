@@ -117,15 +117,6 @@ export default function SignupPage() {
                 required
                 placeholder="Min 6 characters"
               />
-              <Select
-                label="Role"
-                value={formData.role}
-                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                options={[
-                  { value: 'viewer', label: 'Viewer (Read Only)' },
-                  { value: 'manager', label: 'Manager (Full Access)' },
-                ]}
-              />
               {error && <div className="text-red-600 text-sm">{error}</div>}
               <Button onClick={handleNext} className="w-full">
                 Next
@@ -190,9 +181,12 @@ export default function SignupPage() {
                     }
                     placeholder="e.g., abcconstruction.com"
                   />
-                  <p className="text-xs text-gray-500">
-                    You will be the first user of this company. You can invite others later.
-                  </p>
+                  <div className="bg-blue-50 border border-blue-200 rounded p-3">
+                    <p className="text-sm text-blue-800">
+                      <strong>Note:</strong> You will automatically become the <strong>Admin</strong> of this company.
+                      You'll be able to invite other users and manage projects.
+                    </p>
+                  </div>
                 </>
               ) : (
                 <>
@@ -202,6 +196,15 @@ export default function SignupPage() {
                     onChange={(e) => setFormData({ ...formData, companyId: e.target.value })}
                     required
                     placeholder="Enter company ID provided by your administrator"
+                  />
+                  <Select
+                    label="Your Role"
+                    value={formData.role}
+                    onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                    options={[
+                      { value: 'viewer', label: 'Viewer (Read Only)' },
+                      { value: 'manager', label: 'Manager (Log Expenses)' },
+                    ]}
                   />
                   <p className="text-xs text-gray-500">
                     Contact your company administrator to get the Company ID.

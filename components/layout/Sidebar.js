@@ -5,10 +5,11 @@ import { usePathname } from 'next/navigation';
 import clsx from 'clsx';
 
 const navItems = [
-  { href: '/', label: 'Dashboard' },
-  { href: '/projects', label: 'Projects' },
-  { href: '/vendors', label: 'Vendors' },
-  { href: '/reports', label: 'Reports' },
+  { href: '/', label: 'Dashboard', icon: '📊' },
+  { href: '/projects', label: 'Projects', icon: '🏗️' },
+  { href: '/vendors', label: 'Vendors', icon: '🤝' },
+  { href: '/reports', label: 'Reports', icon: '📈' },
+  { href: '/profile', label: 'Profile', icon: '👤' },
 ];
 
 export default function Sidebar() {
@@ -23,11 +24,12 @@ export default function Sidebar() {
               <Link
                 href={item.href}
                 className={clsx(
-                  'block px-4 py-2 rounded hover:bg-gray-100 transition-colors',
+                  'flex items-center gap-3 px-4 py-2 rounded hover:bg-gray-100 transition-colors',
                   pathname === item.href ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-700'
                 )}
               >
-                {item.label}
+                <span className="text-xl">{item.icon}</span>
+                <span>{item.label}</span>
               </Link>
             </li>
           ))}

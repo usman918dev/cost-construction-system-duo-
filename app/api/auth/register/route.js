@@ -23,6 +23,7 @@ async function handler(request) {
   }
 
   let companyId = body.companyId;
+  let isFirstUser = false;
 
   // If registering with a new company, create it first
   if (body.companyName && !body.companyId) {
@@ -31,6 +32,7 @@ async function handler(request) {
       domain: body.companyDomain || '',
     });
     companyId = company._id.toString();
+    isFirstUser = true; // First user of new company becomes admin
   }
 
   // Validate companyId exists
@@ -50,7 +52,7 @@ async function handler(request) {
     name: body.name,
     email: body.email,
     password: body.password,
-    role: body.role || 'viewer',
+    role: isFirstUser ? 'admin' : (body.role || 'viewer'), // First user becomes admin
     companyId,
   });
 

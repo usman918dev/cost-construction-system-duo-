@@ -2,16 +2,18 @@
 
 import { useState, useEffect } from 'react';
 import { use } from 'react';
-import Navbar from '@/components/layout/Navbar';
-import Sidebar from '@/components/layout/Sidebar';
+import AppLayout from '@/components/layout/AppLayout';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import Table from '@/components/ui/Table';
+import ExportModal from '@/components/ui/ExportModal';
+import { usePermissions } from '@/lib/hooks/usePermissions';
 
 export default function ProjectDetailPage({ params }) {
   const { id } = use(params);
+  const { canCreate, canCreateExpense, loading: permissionsLoading } = usePermissions();
   const [project, setProject] = useState(null);
   const [phases, setPhases] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -22,6 +24,7 @@ export default function ProjectDetailPage({ params }) {
   const [showForm, setShowForm] = useState({ phases: false, categories: false, items: false, purchases: false });
   const [formData, setFormData] = useState({});
   const [error, setError] = useState('');
+  const [exportModal, setExportModal] = useState({ isOpen: false, type: '', title: '' });
 
   useEffect(() => {
     fetchData();
@@ -166,45 +169,66 @@ export default function ProjectDetailPage({ params }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error?.message);
       setFormData({});
-      setShowForm({ ...showForm, purchases: false });
-      fetchPurchases();
     } catch (err) {
       setError(err.message);
+    }
+  };
+
+  const openExportModal = (type, title) => {
+    setExportModal({ isOpen: true, type, title });
+  };
+
+  const closeExportModal = () => {
+    setExportModal({ isOpen: false, type: '', title: '' });
+  };
+
+  const getExportButtonText = () => {
+    switch (activeTab) {
+      case 'phases': return 'Export Phases';
+      case 'categories': return 'Export Categories';
+      case 'items': return 'Export Items';
+      case 'purchases': return 'Export Purchases';
+      default: return 'Export';
     }
   };
 
   if (!project) return <div className="p-6">Loading...</div>;
 
   return (
-    <div className="flex min-h-screen">
-      <Sidebar />
-      <div className="flex-1 flex flex-col">
-        <Navbar />
-        <main className="flex-1 p-6">
-          <h2 className="text-2xl font-bold mb-2">{project.name}</h2>
-          <p className="text-gray-600 mb-6">Client: {project.client}</p>
+    <AppLayout>
+      <div className="flex justify-between items-center mb-2">
+        <div>
+          <h2 className="text-2xl font-bold">{project.name}</h2>
+          <p className="text-gray-600">Client: {project.client}</p>
+        </div>
+        <Button onClick={() => openExportModal(activeTab, `Export ${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}`)}>
+          {getExportButtonText()}
+        </Button>
+      </div>
 
-          <div className="flex gap-2 mb-6 border-b">
-            {['phases', 'categories', 'items', 'purchases'].map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`px-4 py-2 capitalize ${
-                  activeTab === tab ? 'border-b-2 border-blue-600 font-medium' : 'text-gray-600'
-                }`}
-              >
-                {tab}
-              </button>
-            ))}
-          </div>
+      <div className="flex gap-2 mb-6 border-b mt-6">
+        {['phases', 'categories', 'items', 'purchases'].map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`px-4 py-2 capitalize ${
+              activeTab === tab ? 'border-b-2 border-blue-600 font-medium' : 'text-gray-600'
+            }`}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
 
-          {activeTab === 'phases' && (
+      {activeTab === 'phases' && (
             <>
-              <Button onClick={() => setShowForm({ ...showForm, phases: !showForm.phases })} className="mb-4">
-                {showForm.phases ? 'Cancel' : 'Add Phase'}
-              </Button>
+              {canCreate && !permissionsLoading && (
+                <Button onClick={() => setShowForm({ ...showForm, phases: !showForm.phases })} className="mb-4">
+                  {showForm.phases ? 'Cancel' : 'Add Phase'}
+                </Button>
+              )}
 
-              {showForm.phases && (
+              {showForm.phases && canCreate && (
                 <Card className="mb-4">
                   <form onSubmit={handlePhaseSubmit} className="space-y-4">
                     <Select
@@ -247,11 +271,13 @@ export default function ProjectDetailPage({ params }) {
 
           {activeTab === 'categories' && (
             <>
-              <Button onClick={() => setShowForm({ ...showForm, categories: !showForm.categories })} className="mb-4">
-                {showForm.categories ? 'Cancel' : 'Add Category'}
-              </Button>
+              {canCreate && !permissionsLoading && (
+                <Button onClick={() => setShowForm({ ...showForm, categories: !showForm.categories })} className="mb-4">
+                  {showForm.categories ? 'Cancel' : 'Add Category'}
+                </Button>
+              )}
 
-              {showForm.categories && (
+              {showForm.categories && canCreate && (
                 <Card className="mb-4">
                   <form onSubmit={handleCategorySubmit} className="space-y-4">
                     <Select
@@ -299,11 +325,13 @@ export default function ProjectDetailPage({ params }) {
 
           {activeTab === 'items' && (
             <>
-              <Button onClick={() => setShowForm({ ...showForm, items: !showForm.items })} className="mb-4">
-                {showForm.items ? 'Cancel' : 'Add Item'}
-              </Button>
+              {canCreate && !permissionsLoading && (
+                <Button onClick={() => setShowForm({ ...showForm, items: !showForm.items })} className="mb-4">
+                  {showForm.items ? 'Cancel' : 'Add Item'}
+                </Button>
+              )}
 
-              {showForm.items && (
+              {showForm.items && canCreate && (
                 <Card className="mb-4">
                   <form onSubmit={handleItemSubmit} className="space-y-4">
                     <Select
@@ -372,11 +400,13 @@ export default function ProjectDetailPage({ params }) {
 
           {activeTab === 'purchases' && (
             <>
-              <Button onClick={() => setShowForm({ ...showForm, purchases: !showForm.purchases })} className="mb-4">
-                {showForm.purchases ? 'Cancel' : 'Add Purchase'}
-              </Button>
+              {canCreateExpense && !permissionsLoading && (
+                <Button onClick={() => setShowForm({ ...showForm, purchases: !showForm.purchases })} className="mb-4">
+                  {showForm.purchases ? 'Cancel' : 'Add Purchase'}
+                </Button>
+              )}
 
-              {showForm.purchases && (
+              {showForm.purchases && canCreateExpense && (
                 <Card className="mb-4">
                   <form onSubmit={handlePurchaseSubmit} className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -472,15 +502,21 @@ export default function ProjectDetailPage({ params }) {
                       <td className="px-6 py-4">{purchase.vendorId?.name || 'N/A'}</td>
                       <td className="px-6 py-4">
                         {new Date(purchase.purchaseDate).toLocaleDateString()}
-                      </td>
-                    </>
-                  )}
-                />
-              </Card>
-            </>
-          )}
-        </main>
-      </div>
-    </div>
+                  </td>
+                </>
+              )}
+            />
+          </Card>
+        </>
+      )}
+
+      <ExportModal
+        isOpen={exportModal.isOpen}
+        onClose={closeExportModal}
+        exportType={exportModal.type}
+        projectId={id}
+        title={exportModal.title}
+      />
+    </AppLayout>
   );
 }

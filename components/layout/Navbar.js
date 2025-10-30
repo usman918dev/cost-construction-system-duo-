@@ -44,10 +44,13 @@ export default function Navbar() {
         <div className="flex items-center gap-4">
           {user && (
             <>
-              <div className="text-sm">
+              <button
+                onClick={() => router.push('/profile')}
+                className="text-sm hover:bg-gray-50 p-2 rounded-lg transition-colors"
+              >
                 <p className="font-medium text-gray-900">{user.name}</p>
                 <p className="text-gray-500 capitalize">{user.role}</p>
-              </div>
+              </button>
               <Button variant="outline" onClick={handleLogout}>
                 Logout
               </Button>

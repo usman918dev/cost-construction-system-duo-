@@ -11,6 +11,8 @@ import VendorSpendPieChart from '@/components/charts/VendorSpendPieChart';
 
 export default function Dashboard() {
   const router = useRouter();
+  const [projects, setProjects] = useState([]);
+  const [selectedProject, setSelectedProject] = useState(null);
   const [budgetData, setBudgetData] = useState([]);
   const [phaseData, setPhaseData] = useState([]);
   const [itemData, setItemData] = useState([]);
@@ -19,32 +21,53 @@ export default function Dashboard() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    fetchProjects();
     fetchAnalytics();
   }, []);
 
-  const fetchAnalytics = async () => {
+  useEffect(() => {
+    if (selectedProject) {
+      fetchAnalytics(selectedProject);
+    }
+  }, [selectedProject]);
+
+  const fetchProjects = async () => {
+    try {
+      const res = await fetch('/api/projects', { credentials: 'include' });
+      const data = await res.json();
+      if (data.ok) setProjects(data.data.projects);
+    } catch (err) {
+      console.error('Failed to fetch projects:', err);
+    }
+  };
+
+  const fetchAnalytics = async (projectId = null) => {
     try {
       setError(null);
+      setLoading(true);
+      
+      const projectParam = projectId ? `?projectId=${projectId}` : '';
+      
       const [budget, phase, items, vendors] = await Promise.all([
-        fetch('/api/analytics/budget-vs-actual', { credentials: 'include' }).then((r) => {
+        fetch(`/api/analytics/budget-vs-actual${projectParam}`, { credentials: 'include' }).then((r) => {
           if (r.status === 401) {
             throw new Error('Unauthorized');
           }
           return r.json();
         }),
-        fetch('/api/analytics/phase-summary', { credentials: 'include' }).then((r) => {
+        fetch(`/api/analytics/phase-summary${projectParam}`, { credentials: 'include' }).then((r) => {
           if (r.status === 401) {
             throw new Error('Unauthorized');
           }
           return r.json();
         }),
-        fetch('/api/analytics/item-breakdown?limit=5', { credentials: 'include' }).then((r) => {
+        fetch(`/api/analytics/item-breakdown?limit=5${projectId ? `&projectId=${projectId}` : ''}`, { credentials: 'include' }).then((r) => {
           if (r.status === 401) {
             throw new Error('Unauthorized');
           }
           return r.json();
         }),
-        fetch('/api/analytics/vendor-spend', { credentials: 'include' }).then((r) => {
+        fetch(`/api/analytics/vendor-spend${projectParam}`, { credentials: 'include' }).then((r) => {
           if (r.status === 401) {
             throw new Error('Unauthorized');
           }
@@ -75,7 +98,31 @@ export default function Dashboard() {
       <div className="flex-1 flex flex-col">
         <Navbar />
         <main className="flex-1 p-6">
-          <h2 className="text-2xl font-bold mb-6">Dashboard</h2>
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold">Dashboard</h2>
+            <div className="flex items-center gap-4">
+              <select
+                value={selectedProject || ''}
+                onChange={(e) => setSelectedProject(e.target.value || null)}
+                className="border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">All Projects</option>
+                {projects.map((project) => (
+                  <option key={project._id} value={project._id}>
+                    {project.name}
+                  </option>
+                ))}
+              </select>
+              {selectedProject && (
+                <button
+                  onClick={() => setSelectedProject(null)}
+                  className="text-sm text-blue-600 hover:text-blue-800"
+                >
+                  Clear Filter
+                </button>
+              )}
+            </div>
+          </div>
 
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
@@ -89,8 +136,19 @@ export default function Dashboard() {
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
                 {budgetData.map((project) => (
-                  <Card key={project.projectId}>
-                    <h3 className="font-semibold text-lg mb-2">{project.projectName}</h3>
+                  <Card 
+                    key={project.projectId}
+                    className={`cursor-pointer transition-all hover:shadow-lg ${
+                      selectedProject === project.projectId ? 'ring-2 ring-blue-500' : ''
+                    }`}
+                    onClick={() => setSelectedProject(project.projectId === selectedProject ? null : project.projectId)}
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="font-semibold text-lg">{project.projectName}</h3>
+                      {selectedProject === project.projectId && (
+                        <span className="text-xs bg-blue-500 text-white px-2 py-1 rounded">Active</span>
+                      )}
+                    </div>
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
                         <span className="text-gray-600">Budget:</span>

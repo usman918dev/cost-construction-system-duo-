@@ -69,7 +69,7 @@ npm run seed
 This creates:
 - **Default Company**: Demo Construction Company
 - **Admin User**:
-  - Email: `admin@example.com`
+  - Email: `admin@admin.com`
   - Password: `Admin@123`
   - Linked to the default company
 
